@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DELTA / TOOLS · Admin Console</title>
+<style>
+  /* ═══════════════════════════════════════════════════════════════════
+     DELTA TOOLS · ADMIN CONSOLE
+     Dark Gaming Aesthetic · Anti-AI-Slop
+     ═══════════════════════════════════════════════════════════════════ */
+  :root {
+    --bg-main:   #090C10;
+    --surface:   #101418;
+    --surface-2: #161C22;
+    --border:    #1E262F;
+    --border-2:  #2A3540;
+    --red:       #E8321A;
+    --red-dim:   rgba(232, 50, 26, 0.20);
+    --orange:    #FF6B1A;
+    --orange-dim:rgba(255, 107, 26, 0.20);
+    --text-hi:   #EDF2F7;
+    --text-mid:  #AAB8C5;
+    --text-low:  #5C6B7A;
+    --green:     #29D68A;
+    --green-dim: rgba(41, 214, 138, 0.15);
+    --amber:     #FFAB20;
+    --blue:      #3B82F6;
+    --mono:      'JetBrains Mono', 'Courier New', monospace;
+    --sans:      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg-main);
+    color: var(--text-hi);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Subtle grid texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #app { position: relative; z-index: 1; }
+
+  /* ─── LOGIN SCREEN ─────────────────────────────────────────────── */
+  .login-wrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 400px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 40px 32px;
+    position: relative;
+  }
+
+  .login-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 32px;
+    width: 64px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--red), transparent);
+  }
+
+  .login-brand {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--red);
+    letter-spacing: 0.15em;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .login-title {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-hi);
+    letter-spacing: -0.02em;
+    margin-bottom: 32px;
+  }
+
+  .field {
+    margin-bottom: 16px;
+  }
+
+  .field label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-low);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .field input {
+    width: 100%;
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 10px 12px;
+    color: var(--text-hi);
+    font-family: var(--mono);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .field input:focus {
+    border-color: var(--red);
+  }
+
+  .btn-primary {
+    width: 100%;
+    background: var(--red);
+    border: none;
+    color: #fff;
+    padding: 12px;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.15s;
+  }
+
+  .btn-primary:hover { background: #c92812; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .err {
+    color: var(--red);
+    font-family: var(--mono);
+    font-size: 11px;
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: var(--red-dim);
+    border-left: 2px solid var(--red);
+    display: none;
+  }
+
+  .err.show { display: block; }
+
+  /* ─── APP LAYOUT ───────────────────────────────────────────────── */
+  .app {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: 100vh;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 20px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .brand {
+    padding: 0 20px 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+
+  .brand-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--red);
+    letter-spacing: 0.15em;
+    border: 1px solid var(--red);
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .brand-name {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-hi);
+    letter-spacing: -0.02em;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    font-size: 13px;
+    color: var(--text-mid);
+    cursor: pointer;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+  }
+
+  .nav-item:hover { color: var(--text-hi); background: var(--surface-2); }
+  .nav-item.active {
+    color: var(--red);
+    background: var(--red-dim);
+    border-left-color: var(--red);
+  }
+
+  .nav-item .icon {
+    font-family: var(--mono);
+    font-size: 12px;
+    width: 16px;
+    text-align: center;
+    opacity: 0.7;
+  }
+
+  .nav-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 12px 20px;
+  }
+
+  /* Main content */
+  .main {
+    padding: 32px 40px;
+    overflow-x: auto;
+  }
+
+  .page-header {
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .page-title {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-hi);
+    letter-spacing: -0.02em;
+  }
+
+  .page-sub {
+    font-size: 12px;
+    color: var(--text-low);
+    margin-top: 4px;
+    font-family: var(--mono);
+  }
+
+  /* Stats grid */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 40px; height: 40px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    opacity: 0.15;
+  }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-low);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-hi);
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-value.red { color: var(--red); }
+  .stat-value.green { color: var(--green); }
+  .stat-value.amber { color: var(--amber); }
+  .stat-value.blue { color: var(--blue); }
+
+  .stat-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-low);
+    margin-top: 6px;
+  }
+
+  /* Section */
+  .section {
+    margin-bottom: 32px;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .section-head::before {
+    content: '';
+    width: 2px;
+    height: 16px;
+    background: var(--red);
+  }
+
+  .section-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-hi);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .section-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+  }
+
+  /* Search bar */
+  .search-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .search-bar input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 10px 12px;
+    color: var(--text-hi);
+    font-family: var(--mono);
+    font-size: 12px;
+    outline: none;
+  }
+
+  .search-bar input:focus { border-color: var(--red); }
+
+  .btn {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text-hi);
+    padding: 10px 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn:hover { border-color: var(--border-2); background: var(--surface); }
+  .btn.red { background: var(--red); border-color: var(--red); color: #fff; }
+  .btn.red:hover { background: #c92812; }
+  .btn.ghost { background: transparent; }
+
+  /* User table */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+
+  thead th {
+    background: var(--surface-2);
+    color: var(--text-low);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 700;
+  }
+
+  tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-mid);
+    vertical-align: middle;
+  }
+
+  tbody tr:hover td { background: var(--surface-2); color: var(--text-hi); }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  .uid {
+    font-family: var(--mono);
+    color: var(--text-low);
+    font-size: 10px;
+    cursor: pointer;
+  }
+
+  .uid:hover { color: var(--orange); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-family: var(--mono);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-radius: 2px;
+  }
+
+  .badge::before {
+    content: '';
+    width: 4px; height: 4px;
+    background: currentColor;
+    border-radius: 50%;
+  }
+
+  .badge.free { background: var(--surface-2); color: var(--text-low); }
+  .badge.premium { background: var(--green-dim); color: var(--green); }
+  .badge.expired { background: rgba(255, 171, 32, 0.15); color: var(--amber); }
+
+  .credit-val {
+    font-family: var(--mono);
+    font-weight: 700;
+    color: var(--orange);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .actions-cell {
+    display: flex;
+    gap: 4px;
+  }
+
+  .btn-icon {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-mid);
+    padding: 6px 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-icon:hover { border-color: var(--red); color: var(--red); }
+  .btn-icon.green:hover { border-color: var(--green); color: var(--green); }
+
+  /* Modal */
+  .modal-bg {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .modal-bg.show { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border-2);
+    border-radius: 3px;
+    width: 100%;
+    max-width: 480px;
+    padding: 24px;
+    position: relative;
+  }
+
+  .modal::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 24px;
+    width: 48px; height: 2px;
+    background: var(--red);
+  }
+
+  .modal-title {
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-hi);
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+
+  .modal-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-low);
+    margin-bottom: 20px;
+    word-break: break-all;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+    justify-content: flex-end;
+  }
+
+  /* Toast */
+  .toast-wrap {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .toast {
+    background: var(--surface-2);
+    border: 1px solid var(--border-2);
+    border-left: 3px solid var(--green);
+    color: var(--text-hi);
+    padding: 12px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    border-radius: 3px;
+    min-width: 240px;
+    animation: slideIn 0.2s ease;
+  }
+
+  .toast.err { border-left-color: var(--red); }
+
+  @keyframes slideIn {
+    from { transform: translateX(20px); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+  }
+
+  /* Empty / loading */
+  .empty {
+    padding: 40px;
+    text-align: center;
+    color: var(--text-low);
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar {
+      position: static;
+      height: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      padding: 16px;
+    }
+    .main { padding: 20px; }
+    .nav-item { padding: 10px 16px; }
+    thead th, tbody td { padding: 8px 10px; font-size: 11px; }
+    .stat-value { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- LOGIN -->
+  <div id="loginView" class="login-wrap">
+    <div class="login-card">
+      <div class="login-brand">// DELTA · TOOLS</div>
+      <div class="login-title">Admin Console</div>
+
+      <form id="loginForm">
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="loginEmail" required placeholder="admin@delta.local">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="loginPassword" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn-primary" id="loginBtn">Masuk</button>
+        <div id="loginErr" class="err"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN APP (hidden until login) -->
+  <div id="appView" class="app" style="display:none;">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-tag">ADMIN</div>
+        <div class="brand-name">DELTA / TOOLS</div>
+      </div>
+
+      <div class="nav-item active" data-view="dashboard">
+        <span class="icon">◈</span> Dashboard
+      </div>
+      <div class="nav-item" data-view="users">
+        <span class="icon">◉</span> Users
+      </div>
+      <div class="nav-item" data-view="transactions">
+        <span class="icon">▣</span> Transactions
+      </div>
+      <div class="nav-item" data-view="logs">
+        <span class="icon">▲</span> Admin Logs
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-item" id="logoutBtn">
+        <span class="icon">✕</span> Logout
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div id="pageContent"></div>
+    </main>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div id="modalBg" class="modal-bg">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js';
+import {
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+} from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js';
+import {
+  getFirestore, collection, doc, getDoc, getDocs, query, orderBy, limit, where
+} from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js';
+import {
+  getFunctions, httpsCallable
+} from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-functions.js';
+
+// ─── FIREBASE CONFIG ──────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyCZQ_TuNdD0u6Yk9PNNBUNJvW5EZ-rDTKo",
+  authDomain: "rorororrortoolsxrheadrtrick.firebaseapp.com",
+  projectId: "rorororrortoolsxrheadrtrick",
+  storageBucket: "rorororrortoolsxrheadrtrick.appspot.com",
+  messagingSenderId: "872606748189",
+  appId: "1:872606748189:android:bfc6694482b6c9dc3a80f4"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const functions = getFunctions(app);
+
+// ─── HELPERS ──────────────────────────────────────────────────────────
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+
+function toast(msg, isErr = false) {
+  const t = document.createElement('div');
+  t.className = 'toast' + (isErr ? ' err' : '');
+  t.textContent = msg;
+  $('#toastWrap').appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+function setPage(html) {
+  $('#pageContent').innerHTML = html;
+}
+
+function openModal(html) {
+  $('#modalContent').innerHTML = html;
+  $('#modalBg').classList.add('show');
+}
+
+function closeModal() {
+  $('#modalBg').classList.remove('show');
+}
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[c]));
+}
+
+function fmtDate(ts) {
+  if (!ts) return '—';
+  try {
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleDateString('id-ID', { year:'numeric', month:'short', day:'numeric' });
+  } catch { return '—'; }
+}
+
+function fmtNum(n) {
+  return (n == null ? 0 : n).toLocaleString('id-ID');
+}
+
+// ─── AUTH ─────────────────────────────────────────────────────────────
+$('#loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('#loginBtn');
+  const err = $('#loginErr');
+  err.classList.remove('show');
+  btn.disabled = true;
+  btn.textContent = 'Memuat...';
+
+  try {
+    await signInWithEmailAndPassword(
+      auth, $('#loginEmail').value, $('#loginPassword').value
+    );
+    // onAuthStateChanged akan handle view
+  } catch (e) {
+    err.textContent = 'Login gagal: ' + (e.code || e.message);
+    err.classList.add('show');
+    btn.disabled = false;
+    btn.textContent = 'Masuk';
+  }
+});
+
+$('#logoutBtn').addEventListener('click', () => signOut(auth));
+
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    // Verify admin claim
+    try {
+      const token = await user.getIdTokenResult(true);
+      if (!token.claims.admin) {
+        toast('Akun ini bukan admin. Hubungi super admin.', true);
+        await signOut(auth);
+        return;
+      }
+    } catch (e) {
+      toast('Gagal verifikasi admin: ' + e.message, true);
+      await signOut(auth);
+      return;
+    }
+    $('#loginView').style.display = 'none';
+    $('#appView').style.display = 'grid';
+    loadDashboard();
+  } else {
+    $('#loginView').style.display = 'flex';
+    $('#appView').style.display = 'none';
+    $('#loginBtn').disabled = false;
+    $('#loginBtn').textContent = 'Masuk';
+  }
+});
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────
+$$('.nav-item').forEach(el => {
+  el.addEventListener('click', () => {
+    if (el.id === 'logoutBtn') return;
+    $$('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+    const view = el.dataset.view;
+    if (view === 'dashboard') loadDashboard();
+    else if (view === 'users') loadUsers();
+    else if (view === 'transactions') loadTransactions();
+    else if (view === 'logs') loadLogs();
+  });
+});
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────
+async function loadDashboard() {
+  setPage(`
+    <div class="page-header">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">Ringkasan data user & aktivitas</div>
+    </div>
+    <div class="empty">Memuat data...</div>
+  `);
+
+  try {
+    const usersSnap = await getDocs(collection(db, 'users'));
+    let totalUsers = usersSnap.size;
+    let premiumActive = 0;
+    let premiumExpired = 0;
+    let totalCredit = 0;
+    let freeUsers = 0;
+
+    const now = new Date();
+    usersSnap.forEach(d => {
+      const data = d.data();
+      const credit = Number(data.creditBalance || 0);
+      totalCredit += credit;
+
+      const prem = data.premium || {};
+      if (prem.isActive === true && prem.expirationDate) {
+        try {
+          const exp = prem.expirationDate.toDate ? prem.expirationDate.toDate() : new Date(prem.expirationDate);
+          if (exp > now) premiumActive++;
+          else premiumExpired++;
+        } catch { freeUsers++; }
+      } else if (prem.isActive === true) {
+        premiumExpired++;
+      } else {
+        freeUsers++;
+      }
+    });
+
+    setPage(`
+      <div class="page-header">
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub">Ringkasan data user & aktivitas</div>
+      </div>
+
+      <div class="stats">
+        <div class="stat" style="color:var(--blue)">
+          <div class="stat-label">Total Users</div>
+          <div class="stat-value blue">${fmtNum(totalUsers)}</div>
+          <div class="stat-sub">Terdaftar di sistem</div>
+        </div>
+        <div class="stat" style="color:var(--green)">
+          <div class="stat-label">Premium Aktif</div>
+          <div class="stat-value green">${fmtNum(premiumActive)}</div>
+          <div class="stat-sub">${premiumExpired} expired</div>
+        </div>
+        <div class="stat" style="color:var(--orange)">
+          <div class="stat-label">Total Credit</div>
+          <div class="stat-value amber">${fmtNum(totalCredit)}</div>
+          <div class="stat-sub">Beredar di semua user</div>
+        </div>
+        <div class="stat" style="color:var(--red)">
+          <div class="stat-label">Free Users</div>
+          <div class="stat-value red">${fmtNum(freeUsers)}</div>
+          <div class="stat-sub">Belum premium</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div class="section-title">Quick Actions</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn red" onclick="document.querySelector('[data-view=users]').click()">
+            → Lihat Users
+          </button>
+          <button class="btn" onclick="document.querySelector('[data-view=transactions]').click()">
+            → Transaksi
+          </button>
+        </div>
+      </div>
+    `);
+  } catch (e) {
+    setPage(`<div class="empty">Error: ${escapeHtml(e.message)}</div>`);
+  }
+}
+
+// ─── USERS ────────────────────────────────────────────────────────────
+let allUsers = [];
+
+async function loadUsers() {
+  setPage(`
+    <div class="page-header">
+      <div class="page-title">Users</div>
+      <div class="page-sub">Kelola credit & premium user</div>
+    </div>
+    <div class="empty">Memuat users...</div>
+  `);
+
+  try {
+    const snap = await getDocs(collection(db, 'users'));
+    allUsers = [];
+    snap.forEach(d => {
+      allUsers.push({ id: d.id, ...d.data() });
+    });
+    allUsers.sort((a, b) => (b.creditBalance || 0) - (a.creditBalance || 0));
+    renderUsersTable(allUsers);
+  } catch (e) {
+    setPage(`<div class="empty">Error: ${escapeHtml(e.message)}</div>`);
+  }
+}
+
+function renderUsersTable(users) {
+  const rows = users.map(u => {
+    const prem = u.premium || {};
+    let badge = '<span class="badge free">FREE</span>';
+    if (prem.isActive === true) {
+      let isExp = false;
+      try {
+        const exp = prem.expirationDate?.toDate ? prem.expirationDate.toDate() : new Date(prem.expirationDate);
+        if (exp <= new Date()) isExp = true;
+      } catch {}
+      badge = isExp
+        ? '<span class="badge expired">EXPIRED</span>'
+        : '<span class="badge premium">PREMIUM</span>';
+    }
+
+    return `
+      <tr>
+        <td>
+          <div class="uid" onclick="navigator.clipboard.writeText('${escapeHtml(u.id)}');toast('UID copied')">
+            ${escapeHtml(u.id.slice(0, 16))}...
+          </div>
+        </td>
+        <td>${escapeHtml(u.deviceId || '—')}</td>
+        <td>${badge}</td>
+        <td><span class="credit-val">${fmtNum(u.creditBalance || 0)}</span></td>
+        <td>${fmtDate(u.createdAt)}</td>
+        <td>
+          <div class="actions-cell">
+            <button class="btn-icon green" onclick="openAddCredit('${escapeHtml(u.id)}')">+CR</button>
+            <button class="btn-icon" onclick="openActivatePremium('${escapeHtml(u.id)}')">+PRM</button>
+            <button class="btn-icon" onclick="openRevokePremium('${escapeHtml(u.id)}')">−PRM</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  setPage(`
+    <div class="page-header">
+      <div class="page-title">Users</div>
+      <div class="page-sub">${users.length} user terdaftar · klik UID untuk copy</div>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Cari UID / Device ID...">
+      <button class="btn" onclick="loadUsers()">↻ Refresh</button>
+    </div>
+
+    <div class="table-wrap">
+      ${users.length === 0
+        ? '<div class="empty">Belum ada user.</div>'
+        : `<table>
+            <thead>
+              <tr>
+                <th>UID</th>
+                <th>Device ID</th>
+                <th>Status</th>
+                <th>Credit</th>
+                <th>Bergabung</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>`}
+    </div>
+  `);
+
+  const searchInput = $('#searchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      if (!q) { renderUsersTable(allUsers); return; }
+      const filtered = allUsers.filter(u =>
+        u.id.toLowerCase().includes(q) ||
+        (u.deviceId && String(u.deviceId).toLowerCase().includes(q))
+      );
+      renderUsersTable(filtered);
+    });
+  }
+}
+
+// ─── ACTIONS ──────────────────────────────────────────────────────────
+window.openAddCredit = (uid) => {
+  openModal(`
+    <div class="modal-title">Tambah / Kurangi Credit</div>
+    <div class="modal-sub">UID: ${escapeHtml(uid)}</div>
+    <div class="field">
+      <label>Jumlah Credit</label>
+      <input type="number" id="mCreditAmount" placeholder="Contoh: 100 (positif) atau -50 (negatif)">
+    </div>
+    <div class="field">
+      <label>Alasan</label>
+      <input type="text" id="mCreditReason" placeholder="Alasan penyesuaian">
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">Batal</button>
+      <button class="btn red" onclick="submitAddCredit('${escapeHtml(uid)}')">Simpan</button>
+    </div>
+  `);
+};
+
+window.submitAddCredit = async (uid) => {
+  const amount = parseInt($('#mCreditAmount').value);
+  const reason = $('#mCreditReason').value || 'Admin adjustment';
+  if (!amount || isNaN(amount)) { toast('Jumlah tidak valid', true); return; }
+
+  try {
+    const fn = httpsCallable(functions, 'adminAddCredits');
+    const res = await fn({ uid, amount, reason });
+    toast(`✓ Credit updated. Saldo baru: ${res.data.balance}`);
+    closeModal();
+    loadUsers();
+  } catch (e) {
+    toast('Gagal: ' + e.message, true);
+  }
+};
+
+window.openActivatePremium = (uid) => {
+  openModal(`
+    <div class="modal-title">Aktifkan Premium</div>
+    <div class="modal-sub">UID: ${escapeHtml(uid)}</div>
+    <div class="field">
+      <label>Durasi (hari)</label>
+      <input type="number" id="mPremDays" value="30" placeholder="30">
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">Batal</button>
+      <button class="btn red" onclick="submitActivatePremium('${escapeHtml(uid)}')">Aktifkan</button>
+    </div>
+  `);
+};
+
+window.submitActivatePremium = async (uid) => {
+  const days = parseInt($('#mPremDays').value) || 30;
+  try {
+    const fn = httpsCallable(functions, 'activatePremium');
+    const res = await fn({ uid, durationDays: days, unlimitedCredit: true });
+    toast(`✓ Premium aktif. Expired: ${res.data.expirationDate}`);
+    closeModal();
+    loadUsers();
+  } catch (e) {
+    toast('Gagal: ' + e.message, true);
+  }
+};
+
+window.openRevokePremium = (uid) => {
+  openModal(`
+    <div class="modal-title">Cabut Premium</div>
+    <div class="modal-sub">UID: ${escapeHtml(uid)}</div>
+    <div style="color:var(--text-mid);font-size:13px;margin:16px 0;">
+      Yakin ingin mencabut status premium user ini?
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">Batal</button>
+      <button class="btn red" onclick="submitRevokePremium('${escapeHtml(uid)}')">Cabut</button>
+    </div>
+  `);
+};
+
+window.submitRevokePremium = async (uid) => {
+  try {
+    const fn = httpsCallable(functions, 'revokePremium');
+    await fn({ uid });
+    toast('✓ Premium dicabut');
+    closeModal();
+    loadUsers();
+  } catch (e) {
+    toast('Gagal: ' + e.message, true);
+  }
+};
+
+window.closeModal = closeModal;
+
+// ─── TRANSACTIONS ─────────────────────────────────────────────────────
+async function loadTransactions() {
+  setPage(`
+    <div class="page-header">
+      <div class="page-title">Transactions</div>
+      <div class="page-sub">Riwayat transaksi user (20 terbaru per user)</div>
+    </div>
+    <div class="empty">Memuat data...</div>
+  `);
+
+  try {
+    const usersSnap = await getDocs(collection(db, 'users'));
+    const allTx = [];
+
+    for (const userDoc of usersSnap.docs.slice(0, 20)) {
+      const uid = userDoc.id;
+      const txSnap = await getDocs(
+        query(collection(db, 'users', uid, 'transactions'), orderBy('createdAt', 'desc'), limit(10))
+      );
+      txSnap.forEach(t => {
+        allTx.push({ uid, id: t.id, ...t.data() });
+      });
+    }
+
+    allTx.sort((a, b) => {
+      const ta = a.createdAt?.toDate?.() || new Date(0);
+      const tb = b.createdAt?.toDate?.() || new Date(0);
+      return tb - ta;
+    });
+
+    const rows = allTx.slice(0, 100).map(tx => `
+      <tr>
+        <td>${escapeHtml(tx.uid.slice(0, 12))}...</td>
+        <td>${escapeHtml(tx.type || '—')}</td>
+        <td>${escapeHtml(tx.feature || '—')}</td>
+        <td style="color:${(tx.amount || 0) > 0 ? 'var(--green)' : 'var(--red)'}">
+          ${(tx.amount || 0) > 0 ? '+' : ''}${fmtNum(tx.amount)}
+        </td>
+        <td>${fmtNum(tx.balanceAfter)}</td>
+        <td>${fmtDate(tx.createdAt)}</td>
+      </tr>
+    `).join('');
+
+    setPage(`
+      <div class="page-header">
+        <div class="page-title">Transactions</div>
+        <div class="page-sub">${allTx.length} transaksi ditemukan</div>
+      </div>
+      <div class="table-wrap">
+        ${allTx.length === 0
+          ? '<div class="empty">Belum ada transaksi.</div>'
+          : `<table>
+              <thead>
+                <tr>
+                  <th>User UID</th>
+                  <th>Tipe</th>
+                  <th>Fitur</th>
+                  <th>Amount</th>
+                  <th>Saldo</th>
+                  <th>Tanggal</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>`}
+      </div>
+    `);
+  } catch (e) {
+    setPage(`<div class="empty">Error: ${escapeHtml(e.message)}</div>`);
+  }
+}
+
+// ─── ADMIN LOGS ───────────────────────────────────────────────────────
+async function loadLogs() {
+  setPage(`
+    <div class="page-header">
+      <div class="page-title">Admin Logs</div>
+      <div class="page-sub">Riwayat aksi admin</div>
+    </div>
+    <div class="empty">Memuat logs...</div>
+  `);
+
+  try {
+    const snap = await getDocs(
+      query(collection(db, 'admin_logs'), orderBy('timestamp', 'desc'), limit(50))
+    );
+
+    const rows = [];
+    snap.forEach(d => {
+      const log = d.data();
+      rows.push(`
+        <tr>
+          <td>${escapeHtml(log.action || '—')}</td>
+          <td>${escapeHtml(log.targetUid ? log.targetUid.slice(0, 12) + '...' : '—')}</td>
+          <td>${escapeHtml(log.adminUid ? log.adminUid.slice(0, 12) + '...' : '—')}</td>
+          <td>${fmtDate(log.timestamp)}</td>
+        </tr>
+      `);
+    });
+
+    setPage(`
+      <div class="page-header">
+        <div class="page-title">Admin Logs</div>
+        <div class="page-sub">${snap.size} log terakhir</div>
+      </div>
+      <div class="table-wrap">
+        ${snap.size === 0
+          ? '<div class="empty">Belum ada log.</div>'
+          : `<table>
+              <thead>
+                <tr>
+                  <th>Aksi</th>
+                  <th>Target</th>
+                  <th>Admin</th>
+                  <th>Waktu</th>
+                </tr>
+              </thead>
+              <tbody>${rows.join('')}</tbody>
+            </table>`}
+      </div>
+    `);
+  } catch (e) {
+    setPage(`<div class="empty">Error: ${escapeHtml(e.message)}</div>`);
+  }
+}
+
+// ─── MODAL BG CLOSE ───────────────────────────────────────────────────
+$('#modalBg').addEventListener('click', (e) => {
+  if (e.target.id === 'modalBg') closeModal();
+});
+
+// ─── GLOBAL EXPOSE ────────────────────────────────────────────────────
+window.toast = toast;
+window.loadUsers = loadUsers;
+
+</script>
+</body>
+</html>
