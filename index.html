@@ -3,52 +3,76 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DELTA / TOOLS · Admin Console</title>
+  <title>Delta Tools · Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div id="app">
-  <!-- LOGIN -->
-  <div id="loginView" class="login-wrap">
-    <div class="login-card">
-      <div class="login-brand">// DELTA · TOOLS</div>
-      <div class="login-title">Admin Console</div>
-      <form id="loginForm">
-        <div class="field">
-          <label>Email</label>
-          <input type="email" id="loginEmail" required placeholder="admin@delta.local">
-        </div>
-        <div class="field">
-          <label>Password</label>
-          <input type="password" id="loginPassword" required placeholder="••••••••">
-        </div>
-        <button type="submit" class="btn-primary" id="loginBtn">Masuk</button>
-        <div id="loginErr" class="err"></div>
-      </form>
-    </div>
-  </div>
 
-  <!-- MAIN APP -->
-  <div id="appView" class="app" style="display:none;">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-tag">ADMIN</div>
-        <div class="brand-name">DELTA / TOOLS</div>
+<div id="loginView" class="login-wrap">
+  <div class="login-panel">
+    <div class="login-header">
+      <span class="login-system">DELTA/TOOLS</span>
+      <span class="login-version">ADMIN CONSOLE</span>
+    </div>
+    <div class="login-sep"></div>
+    <div class="login-prompt">
+      <span class="prompt-caret">&gt;_</span>
+      <span class="prompt-text">authenticate</span>
+    </div>
+    <form id="loginForm" autocomplete="off">
+      <div class="field">
+        <label for="loginEmail">EMAIL</label>
+        <input type="email" id="loginEmail" required spellcheck="false">
       </div>
-      <div class="nav-label">Menu</div>
-      <div class="nav-item active" data-view="dashboard"><span class="icon">◈</span> Dashboard</div>
-      <div class="nav-item" data-view="users"><span class="icon">◉</span> Users</div>
-      <div class="nav-divider"></div>
-      <div class="nav-item" onclick="confirmDeleteAll()" style="color:var(--red)"><span class="icon">⚠</span> Hapus Semua</div>
-      <div class="nav-divider"></div>
-      <div class="nav-item logout" id="logoutBtn"><span class="icon">✕</span> Logout</div>
-    </aside>
-    <main class="main"><div id="pageContent"></div></main>
+      <div class="field">
+        <label for="loginPassword">PASSWORD</label>
+        <input type="password" id="loginPassword" required>
+      </div>
+      <button type="submit" class="btn-enter" id="loginBtn">
+        <span id="loginBtnText">ENTER</span>
+      </button>
+      <div id="loginErr" class="login-err" role="alert"></div>
+    </form>
   </div>
 </div>
 
-<div id="modalBg" class="modal-bg"><div class="modal" id="modalContent"></div></div>
-<div class="toast-wrap" id="toastWrap"></div>
+<div id="appView" class="app" style="display:none;">
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="sys-id">DELTA/TOOLS</div>
+      <div class="sys-role">ADMIN</div>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" data-view="dashboard">
+        <span class="nav-icon">◈</span>
+        <span>Dashboard</span>
+      </button>
+      <button class="nav-item" data-view="users">
+        <span class="nav-icon">◉</span>
+        <span>Users</span>
+      </button>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="nav-item logout" id="logoutBtn">
+        <span class="nav-icon">⏻</span>
+        <span>Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div id="pageContent"></div>
+  </main>
+</div>
+
+<div id="modalOverlay" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<div id="toastStack" class="toast-stack" aria-live="polite"></div>
+
 <script type="module" src="app.js"></script>
 </body>
 </html>
