@@ -7,23 +7,20 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
 <div id="app">
-
   <!-- LOGIN -->
   <div id="loginView" class="login-wrap">
     <div class="login-card">
       <div class="login-brand">// DELTA · TOOLS</div>
       <div class="login-title">Admin Console</div>
-
       <form id="loginForm">
         <div class="field">
           <label>Email</label>
-          <input type="email" id="loginEmail" required placeholder="admin@delta.local" autocomplete="email">
+          <input type="email" id="loginEmail" required placeholder="admin@delta.local">
         </div>
         <div class="field">
           <label>Password</label>
-          <input type="password" id="loginPassword" required placeholder="••••••••" autocomplete="current-password">
+          <input type="password" id="loginPassword" required placeholder="••••••••">
         </div>
         <button type="submit" class="btn-primary" id="loginBtn">Masuk</button>
         <div id="loginErr" class="err"></div>
@@ -31,57 +28,27 @@
     </div>
   </div>
 
-  <!-- MAIN APP (hidden until login) -->
+  <!-- MAIN APP -->
   <div id="appView" class="app" style="display:none;">
-
-    <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="brand">
         <div class="brand-tag">ADMIN</div>
         <div class="brand-name">DELTA / TOOLS</div>
       </div>
-
       <div class="nav-label">Menu</div>
-
-      <div class="nav-item active" data-view="dashboard">
-        <span class="icon">◈</span> Dashboard
-      </div>
-      <div class="nav-item" data-view="users">
-        <span class="icon">◉</span> Users
-      </div>
-      <div class="nav-item" data-view="transactions">
-        <span class="icon">▣</span> Transactions
-      </div>
-      <div class="nav-item" data-view="logs">
-        <span class="icon">▲</span> Admin Logs
-      </div>
-
+      <div class="nav-item active" data-view="dashboard"><span class="icon">◈</span> Dashboard</div>
+      <div class="nav-item" data-view="users"><span class="icon">◉</span> Users</div>
       <div class="nav-divider"></div>
-
-      <div class="nav-item logout" id="logoutBtn">
-        <span class="icon">✕</span> Logout
-      </div>
+      <div class="nav-item" onclick="confirmDeleteAll()" style="color:var(--red)"><span class="icon">⚠</span> Hapus Semua</div>
+      <div class="nav-divider"></div>
+      <div class="nav-item logout" id="logoutBtn"><span class="icon">✕</span> Logout</div>
     </aside>
-
-    <!-- MAIN CONTENT -->
-    <main class="main">
-      <div id="pageContent"></div>
-    </main>
-
+    <main class="main"><div id="pageContent"></div></main>
   </div>
-
 </div>
 
-<!-- MODAL -->
-<div id="modalBg" class="modal-bg">
-  <div class="modal" id="modalContent"></div>
-</div>
-
-<!-- TOAST -->
+<div id="modalBg" class="modal-bg"><div class="modal" id="modalContent"></div></div>
 <div class="toast-wrap" id="toastWrap"></div>
-
-<!-- APP SCRIPT -->
 <script type="module" src="app.js"></script>
-
 </body>
 </html>
