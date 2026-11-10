@@ -3,7 +3,8 @@ import {
   getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js';
 import {
-  getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, increment
+  getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, increment,
+  getDoc, setDoc
 } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js';
 
 /* ── Firebase ───────────────────────────────────────────────── */
@@ -51,21 +52,15 @@ function openModal(html) {
   qs('#modalBox').innerHTML = html;
   qs('#modalOverlay').classList.add('open');
 }
-
 function closeModal() {
   qs('#modalOverlay').classList.remove('open');
   qs('#modalBox').innerHTML = '';
 }
-
-/* Close modal on backdrop click */
 qs('#modalOverlay').addEventListener('click', e => {
   if (e.target === qs('#modalOverlay')) closeModal();
 });
 
-/* ── Page render ────────────────────────────────────────────── */
-function setPage(html) {
-  qs('#pageContent').innerHTML = html;
-}
+function setPage(html) { qs('#pageContent').innerHTML = html; }
 
 /* ── Auth ───────────────────────────────────────────────────── */
 qs('#loginForm').addEventListener('submit', async e => {
@@ -75,7 +70,6 @@ qs('#loginForm').addEventListener('submit', async e => {
   errEl.classList.remove('visible');
   btn.disabled = true;
   qs('#loginBtnText').textContent = 'WAIT...';
-
   try {
     await signInWithEmailAndPassword(auth, qs('#loginEmail').value.trim(), qs('#loginPassword').value);
   } catch (err) {
@@ -121,7 +115,7 @@ onAuthStateChanged(auth, async user => {
   }
 });
 
-/* ── Navigation (event delegation on sidebar) ───────────────── */
+/* ── Navigation ─────────────────────────────────────────────── */
 qs('.sidebar').addEventListener('click', e => {
   const item = e.target.closest('.nav-item[data-view]');
   if (!item) return;
@@ -129,34 +123,20 @@ qs('.sidebar').addEventListener('click', e => {
   item.classList.add('active');
   if (item.dataset.view === 'dashboard') loadDashboard();
   else if (item.dataset.view === 'users') loadUsers();
+  else if (item.dataset.view === 'settings') loadSettings();
 });
 
 /* ── Dashboard ──────────────────────────────────────────────── */
 async function loadDashboard() {
   setPage(`
     <div class="page-head">
-      <div>
-        <div class="page-title">Dashboard</div>
-        <div class="page-meta">Ringkasan data pengguna</div>
-      </div>
+      <div><div class="page-title">Dashboard</div><div class="page-meta">Ringkasan data pengguna</div></div>
     </div>
-    <div class="stat-grid" id="statGrid">
-      <div class="stat-cell">
-        <div class="stat-label">Total Users</div>
-        <div class="stat-num c-blue">—</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-label">Premium Aktif</div>
-        <div class="stat-num c-green">—</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-label">Total Credit</div>
-        <div class="stat-num c-amber">—</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-label">Banned</div>
-        <div class="stat-num c-red">—</div>
-      </div>
+    <div class="stat-grid">
+      <div class="stat-cell"><div class="stat-label">Total Users</div><div class="stat-num c-blue">—</div></div>
+      <div class="stat-cell"><div class="stat-label">Premium Aktif</div><div class="stat-num c-green">—</div></div>
+      <div class="stat-cell"><div class="stat-label">Total Credit</div><div class="stat-num c-amber">—</div></div>
+      <div class="stat-cell"><div class="stat-label">Banned</div><div class="stat-num c-red">—</div></div>
     </div>
   `);
 
@@ -164,7 +144,6 @@ async function loadDashboard() {
     const snap = await getDocs(collection(db, 'users'));
     let premiumActive = 0, totalCredit = 0, banned = 0;
     const now = new Date();
-
     snap.forEach(d => {
       const data = d.data();
       totalCredit += Number(data.creditBalance || 0);
@@ -174,61 +153,32 @@ async function loadDashboard() {
         try {
           const exp = p.expirationDate?.toDate ? p.expirationDate.toDate() : new Date(p.expirationDate);
           if (exp > now) premiumActive++;
-        } catch { /* expired or malformed */ }
+        } catch {}
       }
     });
-
     setPage(`
       <div class="page-head">
-        <div>
-          <div class="page-title">Dashboard</div>
-          <div class="page-meta">Ringkasan data pengguna</div>
-        </div>
+        <div><div class="page-title">Dashboard</div><div class="page-meta">Ringkasan data pengguna</div></div>
       </div>
       <div class="stat-grid">
-        <div class="stat-cell">
-          <div class="stat-label">Total Users</div>
-          <div class="stat-num c-blue">${fmtNum(snap.size)}</div>
-        </div>
-        <div class="stat-cell">
-          <div class="stat-label">Premium Aktif</div>
-          <div class="stat-num c-green">${fmtNum(premiumActive)}</div>
-        </div>
-        <div class="stat-cell">
-          <div class="stat-label">Total Credit</div>
-          <div class="stat-num c-amber">${fmtNum(totalCredit)}</div>
-        </div>
-        <div class="stat-cell">
-          <div class="stat-label">Banned</div>
-          <div class="stat-num c-red">${fmtNum(banned)}</div>
-        </div>
+        <div class="stat-cell"><div class="stat-label">Total Users</div><div class="stat-num c-blue">${fmtNum(snap.size)}</div></div>
+        <div class="stat-cell"><div class="stat-label">Premium Aktif</div><div class="stat-num c-green">${fmtNum(premiumActive)}</div></div>
+        <div class="stat-cell"><div class="stat-label">Total Credit</div><div class="stat-num c-amber">${fmtNum(totalCredit)}</div></div>
+        <div class="stat-cell"><div class="stat-label">Banned</div><div class="stat-num c-red">${fmtNum(banned)}</div></div>
       </div>
     `);
   } catch (err) {
-    setPage(`
-      <div class="page-head">
-        <div><div class="page-title">Dashboard</div></div>
-      </div>
-      <div class="empty-state">Gagal memuat data: ${esc(err.message)}</div>
-    `);
+    setPage(`<div class="empty-state">Gagal memuat data: ${esc(err.message)}</div>`);
   }
 }
 
 /* ── Users ──────────────────────────────────────────────────── */
 let allUsers = [];
 let filteredUsers = [];
+let currentSearch = '';
 
 async function loadUsers() {
-  setPage(`
-    <div class="page-head">
-      <div>
-        <div class="page-title">Users</div>
-        <div class="page-meta">Memuat...</div>
-      </div>
-    </div>
-    <div class="empty-state">Memuat data...</div>
-  `);
-
+  setPage(`<div class="page-head"><div><div class="page-title">Users</div><div class="page-meta">Memuat...</div></div></div><div class="empty-state">Memuat data...</div>`);
   try {
     const snap = await getDocs(collection(db, 'users'));
     allUsers = [];
@@ -237,12 +187,7 @@ async function loadUsers() {
     filteredUsers = [...allUsers];
     renderUsersPage();
   } catch (err) {
-    setPage(`
-      <div class="page-head">
-        <div><div class="page-title">Users</div></div>
-      </div>
-      <div class="empty-state">Gagal memuat: ${esc(err.message)}</div>
-    `);
+    setPage(`<div class="empty-state">Gagal memuat: ${esc(err.message)}</div>`);
   }
 }
 
@@ -258,18 +203,11 @@ function renderUsersPage() {
         const d = p.expirationDate?.toDate ? p.expirationDate.toDate() : new Date(p.expirationDate);
         expired = d <= new Date();
       } catch { expired = true; }
-      badge = expired
-        ? `<span class="badge badge-expired">EXPIRED</span>`
-        : `<span class="badge badge-premium">PREMIUM</span>`;
+      badge = expired ? `<span class="badge badge-expired">EXPIRED</span>` : `<span class="badge badge-premium">PREMIUM</span>`;
     }
-
     const isBanned = u.blocked === true;
     return `<tr>
-      <td>
-        <span class="uid-cell" data-action="copy-uid" data-uid="${esc(u.id)}" title="Klik untuk salin UID">
-          ${esc(u.id)}
-        </span>
-      </td>
+      <td><span class="uid-cell" data-action="copy-uid" data-uid="${esc(u.id)}" title="Klik untuk salin UID">${esc(u.id)}</span></td>
       <td>${esc(u.deviceId || '—')}</td>
       <td>${badge}</td>
       <td><span class="credit-num">${fmtNum(u.creditBalance || 0)}</span></td>
@@ -289,15 +227,10 @@ function renderUsersPage() {
 
   setPage(`
     <div class="page-head">
-      <div>
-        <div class="page-title">Users</div>
-        <div class="page-meta">${allUsers.length} total · ${filteredUsers.length} ditampilkan</div>
-      </div>
+      <div><div class="page-title">Users</div><div class="page-meta">${allUsers.length} total · ${filteredUsers.length} ditampilkan</div></div>
     </div>
     <div class="table-toolbar">
-      <div class="search-wrap">
-        <input type="text" id="searchInput" placeholder="cari uid atau device id..." value="${esc(currentSearch)}" autocomplete="off" spellcheck="false">
-      </div>
+      <div class="search-wrap"><input type="text" id="searchInput" placeholder="cari uid atau device id..." value="${esc(currentSearch)}" autocomplete="off" spellcheck="false"></div>
       <div class="toolbar-right">
         <span class="user-count">${filteredUsers.length} user</span>
         <button class="btn-sm" data-action="refresh">↻ Refresh</button>
@@ -306,74 +239,131 @@ function renderUsersPage() {
     <div class="table-container">
       ${filteredUsers.length === 0 ? `<div class="empty-state">Tidak ada user yang cocok.</div>` : `
       <table>
-        <thead>
-          <tr>
-            <th>UID</th>
-            <th>Device ID</th>
-            <th>Status</th>
-            <th>Credit</th>
-            <th>Bergabung</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
+        <thead><tr><th>UID</th><th>Device ID</th><th>Status</th><th>Credit</th><th>Bergabung</th><th>Aksi</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>`}
     </div>
   `);
 
-  /* Attach search input listener after render */
   const si = qs('#searchInput');
   if (si) {
-    si.addEventListener('input', e => {
-      currentSearch = e.target.value;
-      applySearch(currentSearch);
-    });
-    /* Restore focus + cursor position if search was active */
-    if (currentSearch) {
-      si.focus();
-      si.setSelectionRange(currentSearch.length, currentSearch.length);
-    }
+    si.addEventListener('input', e => { currentSearch = e.target.value; applySearch(currentSearch); });
+    if (currentSearch) { si.focus(); si.setSelectionRange(currentSearch.length, currentSearch.length); }
   }
 }
 
-let currentSearch = '';
-
 function applySearch(q) {
   const qLow = q.toLowerCase().trim();
-  if (!qLow) {
-    filteredUsers = [...allUsers];
-  } else {
-    filteredUsers = allUsers.filter(u =>
-      u.id.toLowerCase().includes(qLow) ||
-      (u.deviceId && String(u.deviceId).toLowerCase().includes(qLow))
-    );
-  }
+  if (!qLow) filteredUsers = [...allUsers];
+  else filteredUsers = allUsers.filter(u =>
+    u.id.toLowerCase().includes(qLow) || (u.deviceId && String(u.deviceId).toLowerCase().includes(qLow))
+  );
   renderUsersPage();
+}
+
+/* ── SETTINGS / SYSTEM CONFIG ───────────────────────────────── */
+async function loadSettings() {
+  setPage(`
+    <div class="page-head">
+      <div><div class="page-title">System Settings</div><div class="page-meta">Atur maintenance, versi, dan update aplikasi</div></div>
+    </div>
+    <div class="empty-state">Memuat konfigurasi...</div>
+  `);
+
+  try {
+    const docRef = doc(db, 'config', 'app_config');
+    let data = {};
+    try {
+      const snap = await getDoc(docRef);
+      if (snap.exists()) data = snap.data();
+    } catch (e) {
+      console.warn('Gagal baca config:', e);
+    }
+
+    setPage(`
+      <div class="page-head">
+        <div><div class="page-title">System Settings</div><div class="page-meta">Atur maintenance, versi, dan update aplikasi</div></div>
+      </div>
+      <div class="settings-wrap">
+        <div class="settings-section">
+          <div class="section-title">MAINTENANCE MODE</div>
+          <div class="field">
+            <label>Status</label>
+            <select id="cfgMaintenance" class="field-input">
+              <option value="false" ${!data.maintenance ? 'selected' : ''}>OFF — Aplikasi Normal</option>
+              <option value="true" ${data.maintenance ? 'selected' : ''}>ON — Maintenance</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Pesan Maintenance</label>
+            <textarea id="cfgMessage" class="field-input" rows="3" placeholder="Aplikasi sedang dalam perbaikan, coba lagi nanti...">${esc(data.maintenance_message || '')}</textarea>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="section-title">UPDATE APLIKASI</div>
+          <div class="field">
+            <label>Minimal Versi (Force Update)</label>
+            <input type="text" id="cfgMinVersion" class="field-input" value="${esc(data.min_version || '8.0')}" placeholder="8.0">
+          </div>
+          <div class="field">
+            <label>Versi Terbaru</label>
+            <input type="text" id="cfgLatestVersion" class="field-input" value="${esc(data.latest_version || '8.0')}" placeholder="8.0">
+          </div>
+          <div class="field">
+            <label>URL Download Update</label>
+            <input type="text" id="cfgUpdateUrl" class="field-input" value="${esc(data.update_url || '')}" placeholder="https://example.com/DeltaFinal.apk">
+          </div>
+        </div>
+
+        <div class="settings-actions">
+          <button class="btn-modal btn-modal-confirm" id="saveConfigBtn">SIMPAN KONFIGURASI</button>
+        </div>
+        <div class="settings-note">
+          ⓘ Perubahan akan dibaca oleh App Delta saat user membuka aplikasi (butuh restart app).
+        </div>
+      </div>
+    `);
+
+    qs('#saveConfigBtn').addEventListener('click', async () => {
+      const btn = qs('#saveConfigBtn');
+      btn.disabled = true;
+      btn.textContent = 'MENYIMPAN...';
+      try {
+        await setDoc(doc(db, 'config', 'app_config'), {
+          maintenance: qs('#cfgMaintenance').value === 'true',
+          maintenance_message: qs('#cfgMessage').value,
+          min_version: qs('#cfgMinVersion').value,
+          latest_version: qs('#cfgLatestVersion').value,
+          update_url: qs('#cfgUpdateUrl').value,
+          updated_at: new Date(),
+          updated_by: auth.currentUser ? auth.currentUser.email : 'admin'
+        }, { merge: true });
+        toast('Konfigurasi disimpan.');
+        btn.disabled = false;
+        btn.textContent = 'SIMPAN KONFIGURASI';
+      } catch (err) {
+        toast('Gagal simpan: ' + err.message, true);
+        btn.disabled = false;
+        btn.textContent = 'SIMPAN KONFIGURASI';
+      }
+    });
+  } catch (err) {
+    setPage(`<div class="empty-state">Gagal memuat: ${esc(err.message)}</div>`);
+  }
 }
 
 /* ── Event delegation for page content ─────────────────────── */
 qs('#pageContent').addEventListener('click', e => {
-  /* UID copy */
   const uid = e.target.closest('[data-action="copy-uid"]');
   if (uid) {
-    navigator.clipboard.writeText(uid.dataset.uid)
-      .then(() => toast('UID disalin'))
-      .catch(() => toast('Gagal salin UID', true));
+    navigator.clipboard.writeText(uid.dataset.uid).then(() => toast('UID disalin')).catch(() => toast('Gagal salin UID', true));
     return;
   }
-
-  /* Refresh */
-  if (e.target.closest('[data-action="refresh"]')) {
-    currentSearch = '';
-    loadUsers();
-    return;
-  }
-
-  /* Row actions */
+  if (e.target.closest('[data-action="refresh"]')) { currentSearch = ''; loadUsers(); return; }
   const btn = e.target.closest('[data-action]');
   if (!btn) return;
   const { action, uid: btnUid, banned } = btn.dataset;
-
   if (action === 'credit')   openCreditModal(btnUid);
   if (action === 'activate') openActivateModal(btnUid);
   if (action === 'revoke')   openRevokeModal(btnUid);
@@ -388,9 +378,7 @@ function modalShell(title, uid, bodyHtml, confirmLabel, confirmHandler) {
     <div class="modal-stripe"></div>
     <div class="modal-title">${title}</div>
     <div class="modal-uid">uid: ${esc(uid)}</div>
-    <div class="modal-body" id="modalBody">
-      ${bodyHtml}
-    </div>
+    <div class="modal-body" id="modalBody">${bodyHtml}</div>
     <div class="modal-actions">
       <button class="btn-modal btn-modal-ghost" id="mCancel">Batal</button>
       <button class="btn-modal btn-modal-confirm" id="mConfirm">${confirmLabel}</button>
@@ -400,14 +388,9 @@ function modalShell(title, uid, bodyHtml, confirmLabel, confirmHandler) {
   qs('#mConfirm').addEventListener('click', confirmHandler);
 }
 
-/* Credit */
 function openCreditModal(uid) {
-  modalShell(
-    'Tambah / Kurangi Credit', uid,
-    `<div class="field">
-      <label>Jumlah (+ tambah, – kurangi)</label>
-      <input type="number" id="mCreditAmt" placeholder="100" autocomplete="off">
-    </div>`,
+  modalShell('Tambah / Kurangi Credit', uid,
+    `<div class="field"><label>Jumlah (+ tambah, – kurangi)</label><input type="number" id="mCreditAmt" placeholder="100" autocomplete="off"></div>`,
     'Simpan',
     async () => {
       const amt = parseInt(qs('#mCreditAmt').value);
@@ -416,18 +399,12 @@ function openCreditModal(uid) {
         await updateDoc(doc(db, 'users', uid), { creditBalance: increment(amt) });
         return `Credit ${amt > 0 ? '+' + amt : amt} berhasil`;
       });
-    }
-  );
+    });
 }
 
-/* Activate Premium */
 function openActivateModal(uid) {
-  modalShell(
-    'Aktifkan Premium', uid,
-    `<div class="field">
-      <label>Durasi (hari)</label>
-      <input type="number" id="mPremDays" value="30" min="1" autocomplete="off">
-    </div>`,
+  modalShell('Aktifkan Premium', uid,
+    `<div class="field"><label>Durasi (hari)</label><input type="number" id="mPremDays" value="30" min="1" autocomplete="off"></div>`,
     'Aktifkan',
     async () => {
       const days = parseInt(qs('#mPremDays').value) || 30;
@@ -440,14 +417,11 @@ function openActivateModal(uid) {
         });
         return `Premium aktif ${days} hari`;
       });
-    }
-  );
+    });
 }
 
-/* Revoke Premium */
 function openRevokeModal(uid) {
-  modalShell(
-    'Cabut Premium', uid,
+  modalShell('Cabut Premium', uid,
     `<div class="modal-warn">Status premium akan dicabut dan akun kembali ke Free.</div>`,
     'Cabut',
     async () => {
@@ -455,14 +429,11 @@ function openRevokeModal(uid) {
         await updateDoc(doc(db, 'users', uid), { membership: 'free', 'premium.isActive': false });
         return 'Premium dicabut';
       });
-    }
-  );
+    });
 }
 
-/* Reset HWID */
 function openHwidModal(uid) {
-  modalShell(
-    'Reset Device ID', uid,
+  modalShell('Reset Device ID', uid,
     `<div class="modal-warn">Ikatan device lama akan dihapus. User bisa login di device baru.</div>`,
     'Reset',
     async () => {
@@ -470,43 +441,33 @@ function openHwidModal(uid) {
         await updateDoc(doc(db, 'users', uid), { deviceId: null });
         return 'Device ID direset';
       });
-    }
-  );
+    });
 }
 
-/* Ban / Unban */
 function openBanModal(uid, isBanned) {
-  modalShell(
-    isBanned ? 'Unban User' : 'Ban User', uid,
-    `<div class="modal-warn ${isBanned ? '' : 'danger'}">${
-      isBanned ? 'Buka blokir user ini?' : 'Blokir akses user ini ke aplikasi?'
-    }</div>`,
+  modalShell(isBanned ? 'Unban User' : 'Ban User', uid,
+    `<div class="modal-warn ${isBanned ? '' : 'danger'}">${isBanned ? 'Buka blokir user ini?' : 'Blokir akses user ini ke aplikasi?'}</div>`,
     isBanned ? 'Unban' : 'Ban',
     async () => {
       await runAction(uid, async () => {
         await updateDoc(doc(db, 'users', uid), { blocked: !isBanned });
         return `User ${isBanned ? 'di-unban' : 'di-ban'}`;
       });
-    }
-  );
+    });
 }
 
-/* Delete */
 function openDeleteModal(uid) {
-  modalShell(
-    'Hapus User', uid,
+  modalShell('Hapus User', uid,
     `<div class="modal-warn danger">Akun ini akan dihapus permanen dari database dan tidak bisa dikembalikan.</div>`,
     'Hapus',
     async () => {
       await runAction(uid, async () => {
         await deleteDoc(doc(db, 'users', uid));
         return 'User dihapus';
-      }, true /* is delete, reload all */);
-    }
-  );
+      }, true);
+    });
 }
 
-/* Shared action runner (disables confirm btn, shows toast, reloads) */
 async function runAction(uid, fn, fullReload = false) {
   const confirmBtn = qs('#mConfirm');
   if (!confirmBtn) return;
@@ -516,17 +477,10 @@ async function runAction(uid, fn, fullReload = false) {
     const msg = await fn();
     toast(msg);
     closeModal();
-    if (fullReload) {
-      currentSearch = '';
-      await loadUsers();
-    } else {
-      await loadUsers();
-    }
+    if (fullReload) { currentSearch = ''; await loadUsers(); }
+    else { await loadUsers(); }
   } catch (err) {
     toast('Gagal: ' + err.message, true);
-    if (confirmBtn) {
-      confirmBtn.disabled = false;
-      confirmBtn.textContent = 'Coba lagi';
-    }
+    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'Coba lagi'; }
   }
 }
