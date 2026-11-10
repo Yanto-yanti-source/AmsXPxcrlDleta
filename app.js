@@ -234,6 +234,7 @@ function renderUsersPage() {
       <div class="toolbar-right">
         <span class="user-count">${filteredUsers.length} user</span>
         <button class="btn-sm" data-action="refresh">↻ Refresh</button>
+        <button class="btn-sm" data-action="delete-all" style="color:#FF3B2F;border-color:#FF3B2F;">🗑 HAPUS SEMUA</button>
       </div>
     </div>
     <div class="table-container">
@@ -370,6 +371,7 @@ qs('#pageContent').addEventListener('click', e => {
   if (action === 'hwid')     openHwidModal(btnUid);
   if (action === 'ban')      openBanModal(btnUid, banned === 'true');
   if (action === 'delete')   openDeleteModal(btnUid);
+  if (action === "delete-all") openDeleteAllModal();
 });
 
 /* ── Modals ─────────────────────────────────────────────────── */
@@ -483,4 +485,53 @@ async function runAction(uid, fn, fullReload = false) {
     toast('Gagal: ' + err.message, true);
     if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'Coba lagi'; }
   }
+}
+
+/* ── Delete All Users ──────────────────────────────────────── */
+function openDeleteAllModal() {
+  openModal(`
+    <div class="modal-stripe"></div>
+    <div class="modal-title">Hapus SEMUA User</div>
+    <div class="modal-uid">⚠ Tindakan ini tidak bisa dibatalkan!</div>
+    <div class="modal-body" id="modalBody">
+      <div class="modal-warn danger">
+        Semua user di Firestore akan dihapus permanen.<br><br>
+        Ketik <b>HAPUS SEMUA</b> untuk konfirmasi:
+      </div>
+      <div class="field">
+        <label>Konfirmasi</label>
+        <input type="text" id="mConfirmText" placeholder="HAPUS SEMUA" autocomplete="off">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal btn-modal-ghost" id="mCancel">Batal</button>
+      <button class="btn-modal btn-modal-confirm" id="mConfirm" style="background:#FF3B2F;">HAPUS SEMUA</button>
+    </div>
+  `);
+  qs('#mCancel').addEventListener('click', closeModal);
+  qs('#mConfirm').addEventListener('click', async () => {
+    const input = qs('#mConfirmText').value.trim();
+    if (input !== 'HAPUS SEMUA') {
+      toast('Ketik "HAPUS SEMUA" untuk konfirmasi', true);
+      return;
+    }
+    const btn = qs('#mConfirm');
+    btn.disabled = true;
+    btn.textContent = 'MENGHAPUS...';
+    try {
+      const snap = await getDocs(collection(db, 'users'));
+      let count = 0;
+      for (const d of snap.docs) {
+        await deleteDoc(doc(db, 'users', d.id));
+        count++;
+      }
+      toast(`Berhasil hapus ${count} user`);
+      closeModal();
+      await loadUsers();
+    } catch (err) {
+      toast('Gagal: ' + err.message, true);
+      btn.disabled = false;
+      btn.textContent = 'HAPUS SEMUA';
+    }
+  });
 }
