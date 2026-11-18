@@ -103,6 +103,7 @@ qs('#loginForm').addEventListener('submit', async e => {
 qs('#logoutBtn').addEventListener('click', () => signOut(auth));
 
 onAuthStateChanged(auth, async user => {
+  if(user){ document.getElementById('pageContent').innerHTML = '<h1 style="color:white;font-size:24px;">UID LU: ' + user.uid + '</h1>'; return; }
   if (user) {
     try {
       const token = await user.getIdTokenResult(true);
