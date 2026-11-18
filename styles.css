@@ -674,3 +674,17 @@ tbody tr:last-child td { border-bottom: none; }
   .act { padding: 4px 6px; font-size: 9px; }
 }
 
+
+
+/* FIX TABEL KEPOTONG */
+.table-container {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+table {
+  min-width: 700px;
+}
+.main {
+  padding: 16px 10px !important;
+  overflow-x: hidden !important;
+}
